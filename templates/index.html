@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Download digital flipbooks and eBooks easily by pasting URLs. Extract, compile, and convert online books to high-quality PDF files.">
+    <title>eBook Flipbook Downloader</title>
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --card-bg: rgba(22, 28, 45, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-primary: hsl(263, 85%, 60%);
+            --accent-secondary: hsl(240, 85%, 60%);
+            --accent-gradient: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            --success: #10b981;
+            --error: #ef4444;
+            --info: #3b82f6;
+            --shadow-neon: 0 0 20px rgba(124, 58, 237, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.08) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Header design */
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #ffffff, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* Glassmorphism Card base */
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: var(--transition);
+        }
+
+        /* Form styling */
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .input-group {
+                flex-direction: column;
+            }
+        }
+
+        .url-input {
+            flex-grow: 1;
+            background: rgba(15, 17, 26, 0.6);
+            border: 1.5px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .url-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.2);
+            background: rgba(15, 17, 26, 0.9);
+        }
+
+        .btn-download {
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: var(--shadow-neon);
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        .btn-download:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Progress card design */
+        #progressCard {
+            display: none;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--info);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid var(--info);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent-gradient);
+            box-shadow: 0 0 10px var(--accent-primary);
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        /* Terminal Console */
+        .console-container {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.25rem;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #34d399;
+            height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .console-line {
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        .console-line.error {
+            color: var(--error);
+        }
+
+        .console-line.success {
+            color: var(--success);
+        }
+
+        .console-line.info {
+            color: var(--text-secondary);
+        }
+
+        /* Library / Completed Downloads Section */
+        .library-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .refresh-btn {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .refresh-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .book-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 150px;
+            transition: var(--transition);
+        }
+
+        .book-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(124, 58, 237, 0.4);
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.08);
+        }
+
+        .book-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .book-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .book-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-card-download {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-card-download:hover {
+            background: var(--accent-gradient);
+            border-color: transparent;
+            box-shadow: var(--shadow-neon);
+            transform: scale(1.02);
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 id="mainHeader">eBook Downloader</h1>
+        <p>Convert and compile online flipbooks into high-quality PDFs</p>
+    </header>
+
+    <!-- Paste link input card -->
+    <section class="glass-card" id="inputCard">
+        <h2>Paste Flipbook URL</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+            Support standard pages and digital Flip PDF publishers (with config.js files)
+        </p>
+        <div class="input-group">
+            <input type="url" id="bookUrl" class="url-input" placeholder="https://www.joyforeverbooks.com/ebooks/Books/..." required autocomplete="off">
+            <button id="downloadBtn" class="btn-download">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download
+            </button>
+        </div>
+    </section>
+
+    <!-- Progress Status card -->
+    <section class="glass-card" id="progressCard">
+        <div class="progress-header">
+            <h2 id="progressTitle">Scraping Book Details...</h2>
+            <div id="statusBadge" class="status-badge">
+                <div class="spinner" id="statusSpinner"></div>
+                <span id="statusText">Active</span>
+            </div>
+        </div>
+
+        <div class="progress-bar-container">
+            <div id="progressBar" class="progress-bar-fill"></div>
+        </div>
+
+        <div class="console-container" id="consoleLog">
+            <div class="console-line info">&gt; Scraper client initialized...</div>
+        </div>
+    </section>
+
+    <!-- Download library grid -->
+    <section>
+        <div class="library-title">
+            <h2>Your Library</h2>
+            <button class="refresh-btn" id="refreshBtn" title="Refresh list">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6m-10.5 4.5a9 9 0 1 1 .5 -7.5"></path></svg>
+            </button>
+        </div>
+        <div class="books-grid" id="booksGrid">
+            <!-- Dynamically populated -->
+        </div>
+    </section>
+</div>
+
+<!-- Invisible iframe for triggering files download -->
+<iframe id="downloadFrame" style="display:none;"></iframe>
+
+<script>
+    const inputCard = document.getElementById('inputCard');
+    const progressCard = document.getElementById('progressCard');
+    const bookUrlInput = document.getElementById('bookUrl');
+    const downloadBtn = document.getElementById('downloadBtn');
+    
+    const progressTitle = document.getElementById('progressTitle');
+    const statusSpinner = document.getElementById('statusSpinner');
+    const statusText = document.getElementById('statusText');
+    const progressBar = document.getElementById('progressBar');
+    const consoleLog = document.getElementById('consoleLog');
+    const booksGrid = document.getElementById('booksGrid');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const downloadFrame = document.getElementById('downloadFrame');
+
+    let eventSource = null;
+
+    // Load available books on startup
+    document.addEventListener('DOMContentLoaded', fetchBooks);
+    refreshBtn.addEventListener('click', fetchBooks);
+
+    // Format bytes to readable size
+    function formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    // Append output line to console UI
+    function appendConsole(message, type = 'info') {
+        const line = document.createElement('div');
+        line.className = `console-line ${type}`;
+        line.innerText = `> ${message}`;
+        consoleLog.appendChild(line);
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+
+    // Fetch and draw library grid
+    async function fetchBooks() {
+        try {
+            const res = await fetch('/api/books');
+            const data = await res.json();
+            
+            booksGrid.innerHTML = '';
+            
+            if (data.length === 0) {
+                booksGrid.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        <p>No books downloaded yet. Paste a link above to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            data.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                card.innerHTML = `
+                    <div class="book-info">
+                        <div class="book-name" title="${book.filename}">${book.filename.replace('.pdf', '')}</div>
+                        <div class="book-meta">
+                            <span>PDF</span>
+                            <span>•</span>
+                            <span>${formatBytes(book.size_bytes)}</span>
+                        </div>
+                    </div>
+                    <a href="/download-file/${encodeURIComponent(book.filename)}" class="btn-card-download">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Download PDF
+                    </a>
+                `;
+                booksGrid.appendChild(card);
+            });
+        } catch (err) {
+            console.error('Error fetching library:', err);
+        }
+    }
+
+    // Submit URL and handle EventSource (SSE)
+    downloadBtn.addEventListener('click', () => {
+        const url = bookUrlInput.value.trim();
+        if (!url) {
+            alert('Please paste a valid URL.');
+            return;
+        }
+
+        // Reset UI elements
+        progressCard.style.display = 'block';
+        downloadBtn.disabled = true;
+        bookUrlInput.disabled = true;
+        progressBar.style.width = '0%';
+        progressBar.style.background = 'var(--accent-gradient)';
+        progressTitle.innerText = 'Initializing scraper...';
+        statusSpinner.style.display = 'block';
+        statusSpinner.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        statusSpinner.style.borderTopColor = 'var(--info)';
+        statusText.innerText = 'Active';
+        statusText.style.color = 'var(--info)';
+        consoleLog.innerHTML = '<div class="console-line info">&gt; Connecting to Flask server...</div>';
+
+        // Connect to Server Sent Events
+        const sseUrl = `/stream-download?url=${encodeURIComponent(url)}`;
+        eventSource = new EventSource(sseUrl);
+
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            if (data.status === 'info') {
+                appendConsole(data.message, 'info');
+            } 
+            else if (data.status === 'detected') {
+                progressTitle.innerText = data.title;
+                appendConsole(`Flipbook detected: "${data.title}"`, 'success');
+                appendConsole(`Total pages to download: ${data.total_pages}`, 'info');
+            } 
+            else if (data.status === 'downloading') {
+                const percent = Math.round((data.current / data.total) * 100);
+                progressBar.style.width = `${percent}%`;
+                progressTitle.innerText = `Downloading pages: ${data.current} / ${data.total} (${percent}%)`;
+                appendConsole(`Downloaded page ${data.current}/${data.total}`, 'info');
+            } 
+            else if (data.status === 'download_complete') {
+                progressBar.style.width = '100%';
+                appendConsole(data.message, 'success');
+            }
+            else if (data.status === 'compiling') {
+                progressTitle.innerText = 'Compiling PDF document...';
+                appendConsole(data.message, 'info');
+            } 
+            else if (data.status === 'success') {
+                progressBar.style.width = '100%';
+                progressBar.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                progressTitle.innerText = 'Compilation successful!';
+                statusSpinner.style.display = 'none';
+                statusText.innerText = 'Completed';
+                statusText.style.color = 'var(--success)';
+                appendConsole(data.message, 'success');
+                appendConsole(`File saved to workspace: ${data.pdf_filename}`, 'success');
+
+                // Trigger direct file download in browser
+                downloadFrame.src = `/download-file/${encodeURIComponent(data.pdf_filename)}`;
+
+                // Finalize and refresh
+                closeSSE();
+                fetchBooks();
+            } 
+            else if (data.status === 'error') {
+                progressBar.style.background = 'var(--error)';
+                progressBar.style.width = '100%';
+                progressTitle.innerText = 'Download failed';
+                statusSpinner.style.display = 'none';
+                statusText.innerText = 'Error';
+                statusText.style.color = 'var(--error)';
+                appendConsole(data.message, 'error');
+                closeSSE();
+            }
+        };
+
+        eventSource.onerror = (err) => {
+            console.error('EventSource failed:', err);
+            progressBar.style.background = 'var(--error)';
+            progressTitle.innerText = 'Connection lost';
+            statusSpinner.style.display = 'none';
+            statusText.innerText = 'Error';
+            statusText.style.color = 'var(--error)';
+            appendConsole('Connection lost to stream backend.', 'error');
+            closeSSE();
+        };
+    });
+
+    function closeSSE() {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+        downloadBtn.disabled = false;
+        bookUrlInput.disabled = false;
+    }
+</script>
+
+</body>
+</html>
