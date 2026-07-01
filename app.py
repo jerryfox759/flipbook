@@ -21,7 +21,11 @@ def stream_download():
     if not url:
         def error_gen():
             yield f"data: {json.dumps({'status': 'error', 'message': 'Missing URL parameter'})}\n\n"
-        return Response(error_gen(), content_type='text/event-stream')
+        response = Response(error_gen(), content_type='text/event-stream')
+        response.headers['Cache-Control'] = 'no-cache, no-transform'
+        response.headers['X-Accel-Buffering'] = 'no'
+        response.headers['Connection'] = 'keep-alive'
+        return response
 
     def generate_progress():
         try:
@@ -31,7 +35,11 @@ def stream_download():
         except Exception as e:
             yield f"data: {json.dumps({'status': 'error', 'message': f'Server exception: {str(e)}'})}\n\n"
 
-    return Response(stream_with_context(generate_progress()), content_type='text/event-stream')
+    response = Response(stream_with_context(generate_progress()), content_type='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache, no-transform'
+    response.headers['X-Accel-Buffering'] = 'no'
+    response.headers['Connection'] = 'keep-alive'
+    return response
 
 @app.route('/api/books')
 def list_books():

@@ -29,5 +29,5 @@ RUN mkdir -p /app/downloads
 # Expose application port
 EXPOSE 5000
 
-# Start the application using gunicorn with an extended timeout to allow PDF compilation
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "180", "app:app"]
+# Start the application using gunicorn with threads and an extended timeout to allow PDF compilation
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "180", "app:app"]
