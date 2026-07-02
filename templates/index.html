@@ -158,6 +158,32 @@
             font-family: 'Lora', serif;
         }
 
+        .free-tagline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 0.85rem;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            background: rgba(163, 132, 91, 0.05);
+            border: 1px solid rgba(163, 132, 91, 0.12);
+            border-radius: 20px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .sparkle-icon {
+            animation: pulse 2s infinite ease-in-out;
+            color: var(--accent-primary);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+
         /* Glassmorphism Card base */
         .glass-card {
             background: var(--card-bg);
@@ -718,6 +744,10 @@
     <header>
         <h1 id="mainHeader">E-Book Downloader</h1>
         <p>Convert and compile online flipbooks into high-quality PDFs</p>
+        <div class="free-tagline">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="sparkle-icon"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>Flipbook PDF Converter is totally free</span>
+        </div>
     </header>
 
     <!-- Authentication Required fallback card -->
