@@ -705,10 +705,14 @@
 
 <script>
     window.addEventListener("load", async function () {
-        const clerkPublishableKey = "{{ clerk_publishable_key }}";
+        const rawKey = "{{ clerk_publishable_key }}";
+        // Clean key by removing any surrounding double or single quotes
+        const clerkPublishableKey = rawKey ? rawKey.replace(/['"]/g, "").trim() : "";
         const authContainer = document.getElementById("authContainer");
         
-        if (!clerkPublishableKey || clerkPublishableKey === "None" || clerkPublishableKey.trim() === "") {
+        console.log("DEBUG: Received Clerk key prefix/length:", clerkPublishableKey.substring(0, 15) + "...", "Length:", clerkPublishableKey.length);
+
+        if (!clerkPublishableKey || clerkPublishableKey === "None" || clerkPublishableKey === "" || clerkPublishableKey === "undefined") {
             console.error("Clerk Publishable Key is missing or invalid in the template!");
             if (authContainer) {
                 authContainer.innerHTML = "<span style='color: var(--error); font-size: 0.85rem;'>Config Error: Publishable Key missing</span>";
@@ -722,6 +726,7 @@
             fapiDomain = atob(clerkPublishableKey.split('_')[2]).replace('$', '');
         } catch (e) {
             console.error("Failed to decode Clerk Publishable Key:", e);
+            console.error("Key string was:", clerkPublishableKey);
             if (authContainer) {
                 authContainer.innerHTML = "<span style='color: var(--error); font-size: 0.85rem;'>Config Error: Invalid Key</span>";
             }
