@@ -706,9 +706,13 @@
 <script>
     window.addEventListener("load", async function () {
         const clerkPublishableKey = "{{ clerk_publishable_key }}";
+        const authContainer = document.getElementById("authContainer");
         
-        if (!clerkPublishableKey) {
-            console.error("Clerk Publishable Key is missing in the template!");
+        if (!clerkPublishableKey || clerkPublishableKey === "None" || clerkPublishableKey.trim() === "") {
+            console.error("Clerk Publishable Key is missing or invalid in the template!");
+            if (authContainer) {
+                authContainer.innerHTML = "<span style='color: var(--error); font-size: 0.85rem;'>Config Error: Publishable Key missing</span>";
+            }
             return;
         }
 
@@ -718,6 +722,9 @@
             fapiDomain = atob(clerkPublishableKey.split('_')[2]).replace('$', '');
         } catch (e) {
             console.error("Failed to decode Clerk Publishable Key:", e);
+            if (authContainer) {
+                authContainer.innerHTML = "<span style='color: var(--error); font-size: 0.85rem;'>Config Error: Invalid Key</span>";
+            }
             return;
         }
 
@@ -729,22 +736,42 @@
         script.async = true;
         document.body.appendChild(script);
 
-        // Wait for Clerk instance to be defined on window
+        // Wait for Clerk instance to be defined on window (6-second timeout)
         let clerk;
-        await new Promise(resolve => {
-            const interval = setInterval(() => {
-                if (window.Clerk) {
-                    clerk = window.Clerk;
-                    clearInterval(interval);
-                    resolve();
-                }
-            }, 100);
-        });
+        try {
+            clerk = await new Promise((resolve, reject) => {
+                let attempts = 0;
+                const interval = setInterval(() => {
+                    attempts++;
+                    if (window.Clerk) {
+                        clearInterval(interval);
+                        resolve(window.Clerk);
+                    } else if (attempts >= 60) { // 6 seconds timeout
+                        clearInterval(interval);
+                        reject(new Error("Clerk JS SDK failed to load within 6 seconds. Please check your network or ad-blockers."));
+                    }
+                }, 100);
+            });
+        } catch (err) {
+            console.error(err);
+            if (authContainer) {
+                authContainer.innerHTML = "<span style='color: var(--error); font-size: 0.85rem;'>Auth Service Failed to Load</span>";
+            }
+            return;
+        }
 
         // Initialize the Clerk client instance (it is a singleton, no need to use 'new')
-        await clerk.load({
-            afterSignOutUrl: window.location.origin
-        });
+        try {
+            await clerk.load({
+                afterSignOutUrl: window.location.origin
+            });
+        } catch (err) {
+            console.error("Clerk load failed:", err);
+            if (authContainer) {
+                authContainer.innerHTML = "<span style='color: var(--error); font-size: 0.85rem;'>Initialization failed</span>";
+            }
+            return;
+        }
 
         const authContainer = document.getElementById("authContainer");
         const loginRequiredCard = document.getElementById("loginRequiredCard");
